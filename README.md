@@ -10,8 +10,9 @@
 
 [![Capture2.png](https://i.postimg.cc/BvQqqVn0/Capture2.png)](https://postimg.cc/JsvwxKX6)
 
-Demo video: https://youtu.be/u93_ozLqg-s 
-Website: http://license-plate-bucket-mntri.s3-website-ap-southeast-2.amazonaws.com/
+## Demo
+* Video: https://youtu.be/u93_ozLqg-s 
+* Website: http://license-plate-bucket-mntri.s3-website-ap-southeast-2.amazonaws.com/
 
 ## Diagram
 [![Diagram.png](https://i.postimg.cc/1t3ZQnM5/Diagram.png)](https://postimg.cc/67gPVQDD)
