@@ -197,6 +197,7 @@ def lambda_handler(event, context):
         # Trả về cho frontend: plate + danh sách từ + ảnh + kết quả query
         return create_response(200, {
             "licensePlate": license_plate,
+            "confidence": round(highest_confidence, 2),
             "detectedWords": detected_words,
             "imageURL": item['ImageURL'],
             "queriedItems": queried_items,
@@ -235,19 +236,22 @@ def create_cors_response():
 
 
 def extract_license_plate(text_detections):
-    license_plate = ""
-    highest_confidence = 0
-    for detection in text_detections:
-        print("[INFO] detection: " + str(detection))
-        if detection['Type'] == "LINE" and detection['Confidence'] > 50:
-            detected_text = detection['DetectedText'].replace(" ", "")
-            if re.match(r"^[A-Z0-9-.]+$", detected_text) and detection['Confidence'] > highest_confidence:
-                license_plate = detected_text
-                highest_confidence = detection['Confidence']
-    return license_plate, highest_confidence
+    # Ưu tiên LINE trước
+    best_line = ""
+    best_confidence = 0
 
-def extract_license_plate(text_detections):
-    # Tìm tất cả từ loại WORD có chứa số hoặc chữ cái liên quan
+    for detection in text_detections:
+        if detection['Type'] == "LINE" and detection['Confidence'] > 70:
+            text = detection['DetectedText'].replace(" ", "")
+            if re.match(r"^[A-Z0-9.-]+$", text):
+                if re.match(r"\d{2}[A-Z]-?[A-Z0-9]{2,5}(\.\d{2})?", text) and detection['Confidence'] > best_confidence:
+                    best_line = text
+                    best_confidence = detection['Confidence']
+
+    if best_line:
+        return best_line, best_confidence
+
+    # Nếu không có LINE hợp lệ → fallback sang ghép từ WORD
     words = []
     for detection in text_detections:
         if detection['Type'] == "WORD" and detection['Confidence'] > 70:
@@ -255,19 +259,57 @@ def extract_license_plate(text_detections):
             if re.match(r"^[A-Z0-9.-]+$", text):
                 words.append(text)
 
-    # Ghép các từ lại thành 1 chuỗi biển số
     candidate = "".join(words)
-
-    # Loại bỏ các dấu thừa nếu có, ví dụ 000.03. → 000.03
     candidate = re.sub(r"[^\w.-]", "", candidate)
 
-    # Thử match theo định dạng chuẩn
-    match = re.search(r"\d{2}[A-Z]-?\d{3}\.?\d{2}", candidate)
+    match = re.search(r"\d{2}[A-Z]-?[A-Z0-9]{2,5}(\.\d{2})?", candidate)
     if match:
-        return match.group(0), 100
+        return match.group(0), 75  # Confidence thấp hơn LINE vì ghép tay
+    elif candidate:
+        return candidate, 60  # Có chuỗi ghép nhưng không khớp định dạng
     else:
-        return candidate, 70
+        return "", 0
 
+
+
+
+# def extract_license_plate(text_detections):
+#     license_plate = ""
+#     highest_confidence = 0
+#     for detection in text_detections:
+#         print("[INFO] detection: " + str(detection))
+#         if detection['Type'] == "LINE" and detection['Confidence'] > 50:
+#             detected_text = detection['DetectedText'].replace(" ", "")
+#             if re.match(r"^[A-Z0-9-.]+$", detected_text) and detection['Confidence'] > highest_confidence:
+#                 license_plate = detected_text
+#                 highest_confidence = detection['Confidence']
+#     return license_plate, highest_confidence
+
+# def extract_license_plate(text_detections):
+#     # Tìm tất cả từ loại WORD có chứa số hoặc chữ cái liên quan
+#     words = []
+#     for detection in text_detections:
+#         if detection['Type'] == "WORD" and detection['Confidence'] > 70:
+#             text = detection['DetectedText']
+#             if re.match(r"^[A-Z0-9.-]+$", text):
+#                 words.append(text)
+
+#     # Ghép các từ lại thành 1 chuỗi biển số
+#     candidate = "".join(words)
+
+#     # Loại bỏ các dấu thừa nếu có, ví dụ 000.03. → 000.03
+#     candidate = re.sub(r"[^\w.-]", "", candidate)
+
+#     # Thử match theo định dạng chuẩn
+#     match = re.search(r"\d{2}[A-Z]-?\d{3}\.?\d{2}", candidate)
+#     if match:
+#         return match.group(0), 100
+#     else:
+#         return candidate, 70
+
+
+
+# Quét biển số xe máy
 # def extract_license_plate(text_detections):
 #     lines = []
 #     for detection in text_detections:
@@ -293,6 +335,7 @@ def extract_license_plate(text_detections):
 #         return match.group(0), 100
 #     else:
 #         return candidate, 70
+
 
 # Hàm tra cứu tỉnh từ biển số
 def get_province_from_plate(plate_number):
