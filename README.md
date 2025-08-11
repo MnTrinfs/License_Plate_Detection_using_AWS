@@ -2,10 +2,8 @@
   <br>
   <a><img src="https://i.postimg.cc/BQj3wKwq/License-Plate-Logo-Black.png" alt="Logo" width="200"></a>
   <br>
-  License_Plate_Detection_using_AWS
-  <br>
+  <h3 align="center">License_Plate_Detection_using_AWS</h3>
 </h1>
-
 <p align="center">My graduation project, making license plate detection website using AWS services</p>
 
 [![Capture2.png](https://i.postimg.cc/BvQqqVn0/Capture2.png)](https://postimg.cc/JsvwxKX6)
